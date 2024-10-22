@@ -309,6 +309,6 @@ users,groups,files = load_data()
 simple_groups = generate_simple_groups(groups)
 print(users)
 db = Utils.create_connector()
-#load_db(db,users,groups,simple_groups)
+load_db(db,users,groups,simple_groups)
 
 load_files_db(db,files)
