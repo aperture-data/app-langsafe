@@ -14,7 +14,7 @@ aperturedb -cfg config.json &
 pid=$!
 
 echo adb config create default --host $DB_HOST --port $ADB_PORT --username $DB_USER --password "$DB_PASS" --no-interactive
-adb config create default --host $DB_HOST --port $ADB_PORT --username $DB_USER --password "$DB_PASS" --no-interactive
+adb config create default --overwrite --host $DB_HOST --port $ADB_PORT --username $DB_USER --password "$DB_PASS" --no-interactive
 
 
 sleep 5
