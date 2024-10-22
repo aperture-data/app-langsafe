@@ -11,7 +11,7 @@ def load_db(db,users,groups,simple_groups):
             "AddEntity": {
                 "class": "User",
                 "properties": {
-                    "name": u.name,
+                    "name": u.user,
                     "system_id": int(u.system_id)
                 }
             }
