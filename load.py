@@ -212,52 +212,103 @@ def generate_simple_groups(groups):
                 raise Exception("Unresolable cycle detected in groups")
 
     print(simple_users)
-    print("Done gsg")
+    # now we have simple_users complete- maps group names to [ group_complete , [ user_1 , user_2 .. user_N ] ]
     return simple_users
-    # now we have simple_users complete.
 
+def load_files_db(db,files):
+    file_id = 1
+    for f in files:
+        file_id = file_id + 1
+        print(f)
+        query=[{
+            "FindEntity": {
+                "with_class":"User",
+                "constraints": {
+                    "system_id": [ "==",  int(f.user_perms)]
+                },
+                "_ref":1
+            }
+        },{
+            "AddEntity": {
+                "class":"File",
+                "properties": {
+                    "name": f.name,
+                    "file_id" : file_id
+                },
+                "connect": {
+                    "ref":1,
+                    "class":"FileOwner"
+                }
+            }
+        }]
+        print(query)
+        db.query(query)
+        if not db.last_query_ok():
+            print("Error Add File")
+            db.print_last_response()
+            return
 
+        query = [{
+            "FindEntity": {
+                "with_class":"Group",
+                "constraints": {
+                    "system_id": ["==", int(f.group_perms)]
+                },
+                "_ref":1
+            }
+        },{
+            "FindEntity": {
+                "with_class":"File",
+                "constraints": {
+                    "file_id": ["==", file_id]
+                },
+                "_ref":2
+            }
+        },{
+            "AddConnection": {
+                "class":"FileGroup",
+                "src":2,
+                "dst":1
+            }
+        }]
+        print(query)
+        db.query(query)
+        if not db.last_query_ok():
+            print("Error Add File Group Link")
+            db.print_last_response()
+            return
 
-                
-
-            
-            
-        # if has groups, see if we have the answer.
         
-        
-
-
-
 
 def load_data():
     ucsv = pd.read_csv( "users.csv")
     gcsv_raw = pd.read_csv("group.csv")
+    files_raw = pd.read_csv("files.csv")
 
     def make_lists( row ):
-        #print("**",row['user_ids'])
         row['user_ids'] = row['user_ids'].split(',')
         gv = row['group_ids']
         row['group_ids'] = [] if isinstance(gv,float) and math.isnan(gv) else gv.split(',')
         return row
 
+    def drop_perms( row ):
+        # we drop off permissions here for simpler test.
+        row['user_perms'] = int(row['user_perms'].split('_')[1])
+        row['group_perms'] = int(row['group_perms'].split('_')[1])
+        return row
+
     gcsv = gcsv_raw.apply(make_lists,axis=1)
-    # print(ucsv)
-    # print(gcsv)
-    # print(gcsv['name']=='devs')
-    # devs=gcsv.loc[ gcsv['name']=='devs']
-    # v=devs['user_ids']
-    # print(type(v))
-    # print(v)
-    # print("===============")
-    # vv=v.iloc[0]
-    # print(type(vv))
+    files = files_raw.apply(drop_perms,axis=1)
 
     ur = ucsv.to_records()
     gr = gcsv.to_records()
-    return [ur,gr]
+    fr= files.to_records()
+    return [ur,gr,fr]
 
-users,groups = load_data()
+users,groups,files = load_data()
 simple_groups = generate_simple_groups(groups)
 print(users)
 db = Utils.create_connector()
-load_db(db,users,groups,simple_groups)
+#load_db(db,users,groups,simple_groups)
+
+load_files_db(db,files)
